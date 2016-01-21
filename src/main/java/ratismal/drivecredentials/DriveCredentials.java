@@ -23,14 +23,12 @@ public class DriveCredentials {
             System.out.println("Opening github repo. Enter anything to continue.");
             try {
                 if (Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().browse(new URI("http://www.omfgdogs.com"));
+                    Desktop.getDesktop().browse(new URI("https://github.com/Ratismal/DriveCredentials"));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             }
             c.readLine();
         }
-
-
     }
 }
