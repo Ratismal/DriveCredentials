@@ -10,15 +10,15 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
-import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.DriveScopes;
+import org.json.JSONObject;
 
 import java.awt.*;
-import java.io.Console;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * Created by Ratismal on 2016-01-21.
@@ -54,22 +54,78 @@ public class DriveCredentials {
             }
             c.readLine();
         }
-        System.out.println("OK! Let's begin.");
-        try {
-            authorize();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        boolean canContinue = false;
 
+        while (!canContinue) {
+            System.out.println("OK! Let's begin.");
+            System.out.println("First of all, type the number of the credential you wish to generate.");
+            System.out.println("   1. Google Drive");
+            System.out.println("   2. OneDrive");
+            System.out.println("   3. Both");
+            String input = c.readLine();
+            switch (input) {
+                case "1":
+                    System.out.println("We're generating Google Drive credentials!");
+                    try {
+                        authorizeGoogle();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    canContinue = true;
+                    break;
+                case "2":
+                    System.out.println("We're generating OneDrive credentials!");
+                    try {
+                        authorizeOnedrive();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    canContinue = true;
+                    break;
+                case "3":
+                    System.out.println("We're generating both Google Drive and OneDrive credentials!");
+                    canContinue = true;
+                    break;
+                default:
+                    System.out.println("Whoops! Didn't quite understand what you meant by that. Let's try again!");
+                    break;
+            }
+        }
         System.out.println("And that should be it! Hopefully everything worked ok!");
         System.out.println("Type anything to exit.");
         c.readLine();
     }
 
-    public static Credential authorize() throws IOException {
+    public static void authorizeOnedrive() throws URISyntaxException, IOException {
+        Desktop.getDesktop().browse(new URI("https://login.live.com/oauth20_authorize.srf?client_id=0000000044" +
+                "17D081&scope=wl.signin%20wl.basic%20wl.offline_access%20wl.skydrive_update&response_type=code"));
+        System.out.println("After accepting, you will be redirected to a webpage.");
+        System.out.println("Please copy and paste it's URL here.");
+        Console c = System.console();
+        String newUrl = c.readLine();
+
+        String code = newUrl.split(Pattern.quote("?code="))[1];
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("code", code);
+        jsonObject.put("auth_key", "");
+        jsonObject.put("refresh_key", "");
+
+
+        try {
+            FileWriter file = new FileWriter("OneDriveCredential.json");
+            file.write(jsonObject.toString());
+            file.close();
+            System.out.println("\nJSON Object: " + jsonObject);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Credential authorizeGoogle() throws IOException {
         // Load client secrets.
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
-                new InputStreamReader(DriveCredentials.class.getResourceAsStream("/client_secrets.json")));
+                new InputStreamReader(DriveCredentials.class.getResourceAsStream("/google_client_secrets.json")));
 
         DATA_STORE_FACTORY = new FileDataStoreFactory(DATA_STORE_DIR);
         // Build flow and trigger user authorization request.
